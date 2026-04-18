@@ -4,6 +4,7 @@ import { connectDB } from "./lib/db.js";
 import { AccountConnection } from "./schema/index.js";
 import { connectInBackground } from "./lib/browser.js";
 import { startTradingEngine } from "./lib/tradingEngine.js";
+import { startStrategyEngine } from "./lib/strategyEngine.js";
 
 const port = parseInt(process.env.PORT ?? "3000");
 
@@ -14,8 +15,9 @@ async function autoReconnect() {
     logger.info({ login: account.mt5Login, server: account.mt5Server }, "Auto-reconnecting browser session after restart");
     connectInBackground(account.mt5Login, account.mt5Password, account.mt5Server, account.platform ?? "MT5");
     if (account.botRunning) {
-      logger.info("Bot was running before restart — resuming trading engine");
+      logger.info("Bot was running before restart — resuming trading engine + strategy engine");
       startTradingEngine("browser");
+      startStrategyEngine();
     }
   } catch (err) {
     logger.warn({ err }, "Auto-reconnect skipped");
