@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { BotConfig, AccountConnection } from "../schema/index.js";
 import { startTradingEngine, stopTradingEngine } from "../lib/tradingEngine.js";
+import { startStrategyEngine, stopStrategyEngine } from "../lib/strategyEngine.js";
 import { logger } from "../lib/logger.js";
 import * as BrowserService from "../lib/browser.js";
 
@@ -30,7 +31,8 @@ router.post("/bot/start", async (req, res) => {
     account.updatedAt = new Date();
     await account.save();
     startTradingEngine("browser");
-    res.json({ running: true, message: "Bot started successfully", connectedBroker: account.broker, activeTrades: 0 });
+    startStrategyEngine();
+    res.json({ running: true, message: "Bot started — auto strategy engine active", connectedBroker: account.broker, activeTrades: 0 });
   } catch { res.status(500).json({ error: "internal_error", message: "Failed to start bot" }); }
 });
 
@@ -39,6 +41,7 @@ router.post("/bot/stop", async (req, res) => {
     const account = await AccountConnection.findOne();
     if (account) { account.botRunning = false; account.updatedAt = new Date(); await account.save(); }
     stopTradingEngine();
+    stopStrategyEngine();
     res.json({ running: false, message: "Bot stopped", connectedBroker: account?.broker ?? null, activeTrades: 0 });
   } catch { res.status(500).json({ error: "internal_error", message: "Failed to stop bot" }); }
 });
